@@ -121,9 +121,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\sr\SR_FileList.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\include\common\port_ms.cpp" />
     <ClCompile Include="SR_FileList.cpp" />
   </ItemGroup>

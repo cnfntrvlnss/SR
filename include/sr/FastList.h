@@ -41,14 +41,12 @@
 //------------------------------------------------------------------------------
 // 不支持拷贝调用
 
-#include "zsr_port.h"
 //宏定义和结构定义
 #include "assert.h"
 #ifndef ASSERT
 #define ASSERT assert
 #endif //ASSERT
 
-//typedef struct{} *POSITION;
 
 #ifndef FASTLIST_MAX_ARRAY_NUM
 #define FASTLIST_MAX_ARRAY_NUM   65536 //最多可以为多少个数组申请内存
@@ -859,55 +857,4 @@ POSITION CFastList<TYPE, ARG_TYPE>::FindIndex(int nIndex)
     return (POSITION)p;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//ZSR's work: add some tools to extend functionality.
-
-#include <list>
-template<typename TYPE, typename ARG_TYPE>
-void cfastlist_sort(CFastList<TYPE, ARG_TYPE> &cli)
-{
-	int cnt = cli.GetCount();
-	std::list<TYPE> tmpLi;
-	for (POSITION po = cli.GetHeadPosition(); po != NULL;){
-		tmpLi.push_back(cli.GetNext(po));
-	}
-	tmpLi.sort();
-	POSITION po = cli.GetHeadPosition();
-	for (std::list<TYPE>::iterator it = tmpLi.begin(); it != tmpLi.end(); it++){
-		cli.SetAt(po, *it);
-		cli.GetNext(po);
-	}
-}
-
-template<typename TYPE, typename ARG_TYPE, typename Compare>
-void cfastlist_sort(CFastList<TYPE, ARG_TYPE> &cli, Compare comp)
-{
-	int cnt = cli.GetCount();
-	std::list<TYPE> tmpLi;
-	for (POSITION po = cli.GetHeadPosition(); po != NULL;){
-		tmpLi.push_back(cli.GetNext(po));
-	}
-	tmpLi.sort(comp);
-	POSITION po = cli.GetHeadPosition();
-	for (std::list<TYPE>::iterator it = tmpLi.begin(); it != tmpLi.end(); it++){
-		cli.SetAt(po, *it);
-		cli.GetNext(po);
-	}
-}
-
-template<typename TYPE, typename ARG_TYPE, typename Compare>
-void cfastlist_sort_copy(const CFastList<TYPE, ARG_TYPE> &cli, CFastList<TYPE, ARG_TYPE> &desli, Compare comp)
-{
-	int cnt = cli.GetCount();
-	std::list<TYPE> tmpLi;
-	for (POSITION po = cli.GetHeadPosition(); po != NULL;){
-		tmpLi.push_back(cli.GetNext(po));
-	}
-	tmpLi.sort(comp);
-
-	for (std::list<TYPE>::iterator it = tmpLi.begin(); it != tmpLi.end(); it++){
-		desli.AddTail(*it);
-	}
-}
 #endif //_FastList_

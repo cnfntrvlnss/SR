@@ -2,9 +2,9 @@
 //
 
 #define SR_EXPORTS
-//#include "stdafx.h"
-#include "sr/sr.h"
 #include "common\port_zsr.h"
+#include "sr\FastList_Ex.h"
+#include "sr/sr.h"
 #include "wave\audio.h"
 
 //语音文件访问接口 - 201至 - 300

@@ -1,7 +1,11 @@
 #define SR_EXPORTS
-//#include "stdafx.h"
-#include "sr/sr.h"
+
 #include "common\port_zsr.h"
+#include "sr/FastList_Ex.h"
+#include "sr/sr.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 //语音文件访问接口 -301 至 -400 
 SR_ERROR g_SR_SpeechSeg_err = { 0, { '\0' } };

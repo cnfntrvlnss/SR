@@ -1,7 +1,7 @@
+#include "port_zsr.h"
 
 #include <Windows.h>
 #include <strsafe.h>
-#include "port_zsr.h"
 
 inline static wchar_t *MBsToWCs(const char *strIn, unsigned int codePage)
 {

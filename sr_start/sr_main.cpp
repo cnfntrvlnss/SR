@@ -1,9 +1,10 @@
 // sr_start.cpp : 定义控制台应用程序的入口点。
 //
+#include "common/port_zsr.h"
+#include "sr/FastList_Ex.h"
 #include "sr/sr.h"
 
 #include "stdafx.h"
-#include "common/port_zsr.h"
 
 #include <vector>
 #include <string>
@@ -120,7 +121,7 @@ TEST(wchar, chinese){
 TEST(SR_FileList, simple1)
 {
 	SR_FILE tmpFile;
-	STRCPY(tmpFile.PathName, _T("文件列表临时文件"));
+	STRCPY(tmpFile.PathName, _T("testdata\\文件列表临时文件"));
 	CFastList<SR_FILE, SR_FILE&> oriList;
 	CFastList<SR_FILE, SR_FILE&> desList;
 	SR_FILE file1 = {_T("郑树锐")};
@@ -154,8 +155,8 @@ inline void SR_WAVBUF_Init(SR_WAVBUF &buf)
 TEST(SR_WaveFile, first)
 {
 	SR_FILE tmpfile, tmpfile2;
-	STRCPY(tmpfile.PathName, _T("0.wav"));
-	STRCPY(tmpfile2.PathName, _T("1.wav"));
+	STRCPY(tmpfile.PathName, _T("testdata\\0.wav"));
+	STRCPY(tmpfile2.PathName, _T("testdata\\1.wav"));
 	char *tmpfilegb = WCsToGB2312s(tmpfile.PathName);
 	char *tmpfile2gb = WCsToGB2312s(tmpfile2.PathName);
 	SR_WAVBUF buf, buf2;
@@ -197,13 +198,12 @@ TEST(SR_SpeechSeg, simpleReadAndWrite)
 	srcLi.AddTail(seg1);
 	srcLi.AddTail(seg2);
 	srcLi.AddTail(seg3);
-	SR_FILE myFile = {_T("语音173的分段信息.list")};
+	SR_FILE myFile = {_T("testdata\\语音173的分段信息.list")};
 	ASSERT_TRUE(SR_SS_WriteSegFile(srcLi, myFile));
 	ASSERT_TRUE(SR_SS_ReadSegFile(myFile, desLi));
 	if (srcLi.GetCount() > 0){
 		POSITION pos = srcLi.GetHeadPosition();
 		do{
-			;
 			POSITION posIn = desLi.GetHeadPosition();
 			int idx = 0;
 			for (idx = 0; idx < desLi.GetCount(); idx++){
@@ -230,7 +230,7 @@ TEST(SR_SpeechSeg, simpleMerge)
 	SR_WAVBUF bufIn, bufOut;
 	SR_WAVBUF_Init(bufIn);
 	SR_WAVBUF_Init(bufOut);
-	SR_WF_ReadWavFile({_T("0.wav")}, bufIn);
+	SR_WF_ReadWavFile({_T("testdata\\0.wav")}, bufIn);
 	ASSERT_LT(30 * 8000, bufIn.nWavBufLen);
 	ASSERT_TRUE(SR_SS_MergeSegWavBuf(bufIn, srcLi, bufOut));
 	ASSERT_EQ(20 * 8000, bufOut.nWavBufLen);

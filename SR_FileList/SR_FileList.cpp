@@ -1,10 +1,12 @@
 #define SR_EXPORTS
+#include "common\port_zsr.h"
+#include "sr\FastList_Ex.h"
+#include "sr\sr.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
 #include <wchar.h>
-#include "sr\sr.h"
-#include "common/port_zsr.h"
 
 #define MAX_LINE_LENGTH 2048
 
