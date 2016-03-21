@@ -41,24 +41,36 @@ inline static char *WCsToMBs(const wchar_t *strIn, unsigned int codePage)
 	return descs;
 }
 
-wchar_t *GB2312sToWCs(const char *param)
+wstring GB2312sToWCs(const char *param)
 {
-	return MBsToWCs(param, CP_ACP);
+	wchar_t *wcs = MBsToWCs(param, CP_ACP);
+	wstring wret = wcs;
+	free(wcs);
+	return wret;
 }
 
-char *WCsToGB2312s(const wchar_t *strIn)
+string WCsToGB2312s(const wchar_t *strIn)
 {
-	return WCsToMBs(strIn, CP_ACP);
+	char *tmpcs = WCsToMBs(strIn, CP_ACP);
+	string ret = tmpcs;
+	free(tmpcs);
+	return ret;
 }
 
-wchar_t *UTF8sToWCs(const char *strIn)
+wstring UTF8sToWCs(const char *strIn)
 {
-	return MBsToWCs(strIn, CP_UTF8);
+	wchar_t *tmpwcs = MBsToWCs(strIn, CP_UTF8);
+	wstring ret = tmpwcs;
+	free(tmpwcs);
+	return ret;
 }
 
-char *WCsToUTF8s(const wchar_t *strIn)
+string WCsToUTF8s(const wchar_t *strIn)
 {
-	return WCsToMBs(strIn, CP_UTF8);
+	char *tmpcs = WCsToMBs(strIn, CP_UTF8);
+	string ret = tmpcs;
+	free(tmpcs);
+	return ret;
 }
 
 LPTSTR GenLastErrorStr(LPTSTR lpszFunction, DWORD dw)

@@ -3,6 +3,8 @@
 #include "common\port_zsr.h"
 #include "sr/sr.h"
 
+static SR_ERROR g_SR_SID_Error;
+
 SR_API void SR_SID_GetLastError(SR_HANDLE handle, SR_ERROR& Error)
 {
 
