@@ -125,7 +125,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\include\common\port_ms.cpp" />
+    <ClCompile Include="..\include\common\port_zsr.cpp" />
     <ClCompile Include="SR_SpeechSeg.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

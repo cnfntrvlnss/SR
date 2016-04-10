@@ -65,7 +65,7 @@
     <ClCompile Include="wave\wav.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\include\common\port_ms.cpp">
+    <ClCompile Include="..\include\common\port_zsr.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -27,8 +27,8 @@ bool SR_FL_WriteListFile(const CFastList<SR_FILE, SR_FILE&>& FileList, const SR_
 {
 	char bsPath[MAX_PATH];
 	//wcstombs(bsPath, File.PathName, SR_MAX_PATHNAME_LEN);
-	char *strTemp = WCsToGB2312s(File.PathName);
-	strncpy(bsPath, strTemp, MAX_PATH);
+	string strFile = WCsToGB2312s(File.PathName);
+	strncpy(bsPath, strFile.c_str(), MAX_PATH);
 	FILE *fp = fopen(bsPath, "wt");
 	if (fp == NULL){
 		MYERROR(_T("fail to open file %ls"), File.PathName);
@@ -37,9 +37,8 @@ bool SR_FL_WriteListFile(const CFastList<SR_FILE, SR_FILE&>& FileList, const SR_
 	POSITION pos = FileList.GetHeadPosition();
 	for (unsigned i = 0; i < FileList.GetCount(); i++)
 	{
-		char *tmpStr = WCsToUTF8s(FileList.GetNext(pos).PathName);
-		fprintf(fp, "%s\n", tmpStr);
-		free(tmpStr);
+		string tmpStr = WCsToUTF8s(FileList.GetNext(pos).PathName);
+		fprintf(fp, "%s\n", tmpStr.c_str());
 	}
 	fclose(fp);
 	return true;
@@ -48,8 +47,8 @@ bool SR_FL_ReadListFile(const SR_FILE& File, CFastList<SR_FILE, SR_FILE&>& FileL
 {
 	char bsFile[MAX_PATH];
 	//wcstombs(bsFile, File.PathName, SR_MAX_PATHNAME_LEN);
-	char *strTemp = WCsToGB2312s(File.PathName);
-	strncpy(bsFile, strTemp, MAX_PATH);
+	string strFile = WCsToGB2312s(File.PathName);
+	strncpy(bsFile, strFile.c_str(), MAX_PATH);
 	FILE *fd = fopen(bsFile, "rt");
 	if (fd == NULL){
 		MYERROR(_T("fail to open file %ls"), File.PathName);
@@ -63,9 +62,8 @@ bool SR_FL_ReadListFile(const SR_FILE& File, CFastList<SR_FILE, SR_FILE&>& FileL
 		if (ch == '\n'){
 			ch = '\0';
 		}
-		wchar_t *tmpWStr = UTF8sToWCs(tmpStr);
-		wcsncpy(curFile.PathName, tmpWStr, SR_MAX_PATHNAME_LEN);
-		free(tmpWStr);
+		wstring tmpWStr = UTF8sToWCs(tmpStr);
+		wcsncpy(curFile.PathName, tmpWStr.c_str(), SR_MAX_PATHNAME_LEN);
 		FileList.AddTail(curFile);
 	}
 	return true;

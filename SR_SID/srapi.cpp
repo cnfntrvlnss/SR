@@ -22,7 +22,7 @@ static GaussPLDA *g_PLDA = NULL;
 static unsigned int g_t_rank = 0;
 
 #ifdef __cplusplus
-extern "C" {
+//extern "C" {
 #endif
 
     SDKAPI RetCode TIT_SR_Intialize(const char *syspath, SRConfig &syscfg)
@@ -243,5 +243,5 @@ extern "C" {
     }
 
 #ifdef __cplusplus
-}
+//}
 #endif

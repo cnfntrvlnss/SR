@@ -11,13 +11,13 @@
 SR_ERROR g_SR_SpeechSeg_err = { 0, { '\0' } };
 void SR_SS_GetLastError(SR_HANDLE handle, SR_ERROR& Error)
 {
-
+	Error = g_SR_SpeechSeg_err;
 }
 
 bool SR_SS_ReadSegFile(const SR_FILE& File, CFastList<SR_SEG, SR_SEG&>& Seg)
 {
-	char *pathname = WCsToGB2312s(File.PathName);
-	FILE *fp = fopen(pathname, "r");
+	string strFile = WCsToGB2312s(File.PathName);
+	FILE *fp = fopen(strFile.c_str(), "r");
 	if (fp == NULL){
 		return false;
 	}
@@ -59,8 +59,8 @@ bool SR_SS_ReadSegFile(const SR_FILE& File, CFastList<SR_SEG, SR_SEG&>& Seg)
 
 bool SR_SS_WriteSegFile(const CFastList<SR_SEG, SR_SEG&>& Seg, const SR_FILE& File)
 {
-	char *pathname = WCsToGB2312s(File.PathName);
-	FILE *fp = fopen(pathname, "w");
+	string strFile = WCsToGB2312s(File.PathName);
+	FILE *fp = fopen(strFile.c_str(), "w");
 	if (fp == NULL){
 		return false;
 	}
@@ -138,11 +138,16 @@ bool SR_SS_MergeSegWavBuf(const SR_WAVBUF& WavBufIn, const CFastList<SR_SEG, SR_
 		}
 		if (bFinish) break;
 	}
+
+	if (WavBufOut.nWavBufLen == 0){
+		free(WavBufOut.pWavBuf);
+		WavBufOut.pWavBuf = NULL;
+	}
 	return true;
 }
 
 bool SR_SS_CalSegOffset(const CFastList<SR_SEG, SR_SEG&>& AllAbsSeg, const CFastList<SR_SEG, SR_SEG&>& SegOppSeg, CFastList<SR_SEG, SR_SEG&>& SegAbsSeg)
 {
-	fprintf(stderr, "calling unimplemented function SR_SS_CalSegOffset.\n");
+	fprintf(stderr, "unimplemented function SR_SS_CalSegOffset.\n");
 	return false;
 }

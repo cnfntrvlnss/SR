@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../lib/x64/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gmock.lib;SR_FileListd.lib;SR_WaveFiled.lib;SR_SpeechSegd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gmock.lib;SR_FileListd.lib;SR_WaveFiled.lib;SR_SpeechSegd.lib;SR_LIDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -158,7 +158,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\include\common\port_ms.cpp" />
+    <ClCompile Include="..\include\common\port_zsr.cpp" />
     <ClCompile Include="sr_main.cpp" />
     <ClCompile Include="sr_utilities.cpp" />
     <ClCompile Include="stdafx.cpp" />

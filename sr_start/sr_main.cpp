@@ -93,25 +93,22 @@ TEST(fastlist, baseop){
 TEST(wchar, chinese){
 	std::string greetingcn = "郑树锐，你好";
 	std::string greetingen = "hello, zhengshurui";
-
-	wchar_t * wstrTemp = GB2312sToWCs(greetingcn.c_str());
-	ASSERT_NE(nullptr, wstrTemp)<< "fail to convert to wchar.";
+	wstring tmpwstr = GB2312sToWCs(greetingcn.c_str());
+	ASSERT_NE(nullptr, tmpwstr.c_str())<< "fail to convert to wchar.";
 	/* error: 向控制台写宽字符，控制台没显示。
 	fputws(L"error string: ", stderr);
 	fputws(wstrTemp, stderr);
 	fwprintf(stderr, L"(%u) ", wcslen(wstrTemp));
 	fputws(L"\n", stderr);
 	*/
-	char *strTemp = WCsToGB2312s(wstrTemp);
+	string tmpstr = WCsToGB2312s(tmpwstr.c_str());
 	//fprintf(stderr, "error string:: %s\n", strTemp);
-	ASSERT_EQ(0, strcmp(greetingcn.c_str(), strTemp))<<"fail to get back original string of greetingcn  by transforming from ansi to wchar to ansi.";
-	free(const_cast<wchar_t*>(wstrTemp));
-	free(strTemp);
-	wstrTemp = GB2312sToWCs(greetingen.c_str());
-	strTemp = WCsToGB2312s(wstrTemp);
-	ASSERT_EQ(0, strcmp(greetingen.c_str(), strTemp)) << "fail to get back original string of greetingen  by transforming from ansi to wchar to ansi.";
-	free(wstrTemp);
-	free(strTemp);
+	ASSERT_EQ(0, strcmp(greetingcn.c_str(), tmpstr.c_str()))<<"fail to get back original string of greetingcn  by transforming from ansi to wchar to ansi.";
+	tmpwstr = GB2312sToWCs(greetingen.c_str());
+	tmpstr = WCsToGB2312s(tmpwstr.c_str());
+	ASSERT_EQ(0, strcmp(greetingen.c_str(), tmpstr.c_str())) << "fail to get back original string of greetingen  by transforming from ansi to wchar to ansi.";
+
+	greetingen.rfind('i', greetingen.length());
 
 }
 
@@ -157,8 +154,8 @@ TEST(SR_WaveFile, first)
 	SR_FILE tmpfile, tmpfile2;
 	STRCPY(tmpfile.PathName, _T("testdata\\0.wav"));
 	STRCPY(tmpfile2.PathName, _T("testdata\\1.wav"));
-	char *tmpfilegb = WCsToGB2312s(tmpfile.PathName);
-	char *tmpfile2gb = WCsToGB2312s(tmpfile2.PathName);
+	const char *tmpfilegb = WCsToGB2312s(tmpfile.PathName).c_str();
+	const char *tmpfile2gb = WCsToGB2312s(tmpfile2.PathName).c_str();
 	SR_WAVBUF buf, buf2;
 	SR_WAVBUF_Init(buf);
 	SR_WAVBUF_Init(buf2);
@@ -234,6 +231,31 @@ TEST(SR_SpeechSeg, simpleMerge)
 	ASSERT_LT(30 * 8000, bufIn.nWavBufLen);
 	ASSERT_TRUE(SR_SS_MergeSegWavBuf(bufIn, srcLi, bufOut));
 	ASSERT_EQ(20 * 8000, bufOut.nWavBufLen);
+}
+
+/**
+*/
+TEST(SR_LID, generalTest)
+{
+	
+	SR_HANDLE lidHdl = SR_LID_Init({L"D:\\shared_dir\\语种识别引擎和模型\\引擎\\LID_engine_windows\\LIDtest_offLine\\sysdir"});
+	SR_ERROR Error;
+	SR_LID_GetLastError(lidHdl, Error);
+	ASSERT_NE(0, lidHdl) << Error.nError << " " << WCsToGB2312s(Error.chError).c_str();
+	CFastList<SR_FILE, SR_FILE&> smpList;
+	SR_FL_ReadListFile({ L"testdata\\lid.list" }, smpList);
+	ASSERT_NE(0, smpList.GetCount())<< "无法读入任务列表文件"<< "testdata\\lid.list";
+	for (int i = 0; i < smpList.GetCount(); i++){
+		SR_LIDRSTS rsts;
+		CFastList<SR_SEG, SR_SEG&> Segs;
+		SR_WAVBUF wavBuf;
+		string strFile = WCsToGB2312s(smpList.GetAt(i).PathName);
+		ASSERT_TRUE(SR_WF_ReadWavFile(smpList.GetAt(i), wavBuf))<< "无法读入待识别音频文件" << strFile;
+		SR_SEG seg = { 0, 0, wavBuf.nWavBufLen, 0, 1 };
+		Segs.AddTail(seg);
+		ASSERT_TRUE(SR_LID_File(lidHdl, smpList.GetAt(i), Segs, rsts))<< "lid识别失败 at " << strFile;
+	}
+	SR_LID_Release(lidHdl);
 }
 
 int main(int argc, char **argv) {

@@ -38,10 +38,10 @@
     <ClCompile Include="sr_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\include\common\port_ms.cpp">
+    <ClCompile Include="sr_utilities.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sr_utilities.cpp">
+    <ClCompile Include="..\include\common\port_zsr.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

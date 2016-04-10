@@ -16,9 +16,7 @@ void SR_WF_GetLastError(SR_HANDLE handle, SR_ERROR& Error)
 
 bool SR_WF_ReadWavFile(const SR_FILE& File, SR_WAVBUF& WavBuf)
 {
-	char *tmpStr = WCsToGB2312s(File.PathName);
-	std::string curFile = tmpStr;
-	free(tmpStr);
+	string curFile = WCsToGB2312s(File.PathName);
 	Wav *retwav = LoadWav(curFile.c_str(), nullptr, 0, 0);
 	if (retwav == nullptr){
 		return false;
@@ -35,9 +33,7 @@ bool SR_WF_ReadWavFile(const SR_FILE& File, SR_WAVBUF& WavBuf)
 
 bool SR_WF_WriteWavFile(const SR_WAVBUF& WavBuf, const SR_FILE& File)
 {
-	char *tmpStr = WCsToGB2312s(File.PathName);
-	std::string curFile = tmpStr;
-	free(tmpStr);
+	string curFile = WCsToGB2312s(File.PathName);
 	Wav * wav = new PCM();
 	wav->SetData(WavBuf.pWavBuf, WavBuf.nWavBufLen, WavBuf.wf.nSamplesPerSec);
 	bool retb = wav->Save(curFile.c_str());
