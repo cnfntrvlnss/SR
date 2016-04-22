@@ -20,6 +20,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SR_SID", "SR_SID\SR_SID.vcxproj", "{B0B20148-3667-4414-93BF-9AA245A595EC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SR_LID", "SR_LID\SR_LID.vcxproj", "{4EF44E67-832D-4A85-8DDA-B784675FBABD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2EBFEA08-BD8E-47F3-A121-F7D154A613A9} = {2EBFEA08-BD8E-47F3-A121-F7D154A613A9}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

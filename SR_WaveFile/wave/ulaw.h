@@ -15,7 +15,7 @@
 * @brief	8 比特 U 律量化的 PCM.
 * @details	子类, 不可再次继承.
 **************************************************************************************************/
-class ULaw final : public Wav
+class ULaw : public Wav
 {
 public:
     virtual bool Load(const char *wavfile, unsigned int smprate, unsigned short numchls, unsigned short headcut = 0, unsigned short tailcut = 0, unsigned short minproc = 0, unsigned short maxproc = USHRT_MAX) override;

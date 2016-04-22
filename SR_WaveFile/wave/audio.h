@@ -18,7 +18,7 @@
  * @enum	WavFmt
  * @brief	编码格式.
  **************************************************************************************************/
-enum class WavFmt : unsigned short
+enum WavFmt
 {
     pcm = 0x0001,
     alaw = 0x0006,

@@ -12,6 +12,7 @@ typedef unsigned long DWORD;
 */
 #if defined(_WIN32) || defined(_WIN64)
 #include <afx.h>
+#include <afxmt.h>
 
 #else
 #endif
@@ -61,6 +62,8 @@ inline wstring Path_JoinPath(const wstring &path1, const wstring &path2)
 		return path1 + path2;
 	}
 }
+
+
 
 /**
 对本模块的函数错误情况集中由此函数获取。

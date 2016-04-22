@@ -14,7 +14,12 @@
 #include <cstdio>
 #include <locale.h>
 
+#include <omp.h>
+#include <tbb\pipeline.h>
+#include <tbb\atomic.h>
+
 using std::string;
+using std::vector;
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -233,29 +238,236 @@ TEST(SR_SpeechSeg, simpleMerge)
 	ASSERT_EQ(20 * 8000, bufOut.nWavBufLen);
 }
 
+SR_API void FreeSRWFWav(SR_WAVBUF &wavBuf);
 /**
 */
-TEST(SR_LID, generalTest)
+TEST(SR_LID, DISABLED_generalTest)
 {
-	
-	SR_HANDLE lidHdl = SR_LID_Init({L"D:\\shared_dir\\语种识别引擎和模型\\引擎\\LID_engine_windows\\LIDtest_offLine\\sysdir"});
-	SR_ERROR Error;
-	SR_LID_GetLastError(lidHdl, Error);
-	ASSERT_NE(0, lidHdl) << Error.nError << " " << WCsToGB2312s(Error.chError).c_str();
 	CFastList<SR_FILE, SR_FILE&> smpList;
 	SR_FL_ReadListFile({ L"testdata\\lid.list" }, smpList);
-	ASSERT_NE(0, smpList.GetCount())<< "无法读入任务列表文件"<< "testdata\\lid.list";
-	for (int i = 0; i < smpList.GetCount(); i++){
+	ASSERT_NE(0, smpList.GetCount()) << "无法读入任务列表文件" << "testdata\\lid.list";
+	const char *resFile = "testdata\\lidres.list";
+	FILE *outfp = fopen(resFile, "w");
+	ASSERT_NE((FILE*)NULL, outfp) << "无法创建结果文件" << resFile;
+
+	const unsigned concurNum = 10;
+	int errcnt = 0;
+	int coreNum = omp_get_num_procs();
+	printf("%d threads and %d session to process %d tasks\n", coreNum, concurNum, smpList.GetCount());
+#pragma omp parallel for
+	for (int i = 0; i < concurNum; i++){
+		SR_HANDLE lidHdl = SR_LID_Init({L"D:\\shared_dir\\语种识别引擎和模型\\引擎\\LID_engine_windows\\LIDtest_offLine\\sysdir"});
+		if (lidHdl == 0){
+			SR_ERROR Error;
+			SR_LID_GetLastError(lidHdl, Error);
+			printf("InitError %d %s\n", Error.nError, WCsToGB2312s(Error.chError).c_str());
+#pragma omp critical
+			{
+				errcnt ++;
+			}
+			continue;
+		}
+		for (int j = i; j < smpList.GetCount(); j += concurNum){
+			SR_LIDRSTS rsts;
+			CFastList<SR_SEG, SR_SEG&> Segs;
+			SR_WAVBUF wavBuf;
+			string strFile = WCsToGB2312s(smpList.GetAt(j).PathName);
+			if (!SR_WF_ReadWavFile(smpList.GetAt(j), wavBuf)){
+				printf("无法读入待识别音频文件 at %s\n", strFile.c_str());
+				continue;
+			}
+			SR_SEG seg = { 0, 0, wavBuf.nWavBufLen, 0, 1 };
+			FreeSRWFWav(wavBuf);
+			Segs.AddTail(seg);
+			if (!SR_LID_File(lidHdl, smpList.GetAt(j), Segs, rsts)){
+				SR_ERROR Error;
+				SR_LID_GetLastError(lidHdl, Error);
+				printf("%s at %s\n", WCsToMBs(Error.chError).c_str(), strFile.c_str());
+				continue;
+			}
+			wchar_t resline[512];
+			if (rsts.nRstNum > 0){
+				swprintf(resline, L"%ls    %ls    %d\n", smpList.GetAt(j).PathName, rsts.LIDRst[0].chName, rsts.LIDRst[0].nLIDScore);
+			}
+			else{
+				swprintf(resline, L"%ls\n", smpList.GetAt(j).PathName);
+			}
+			fprintf(outfp, "%s", WCsToUTF8s(resline).c_str());
+		}
+		SR_LID_Release(lidHdl);
+	}
+	fclose(outfp);
+	ASSERT_EQ(0, errcnt) << "获取一路引擎操作失败次数大于0";
+
+}
+
+class OneAudioRec{
+public:
+	SR_FILE audioFile;
+	vector<SR_LIDRSTS> results;
+};
+typedef vector<OneAudioRec> MultiAudioRec;
+//////////////////////////////////////////////////////////////////////////
+class MyInputPckFunc: public tbb::filter {
+public:
+	MyInputPckFunc(FILE *fp, size_t chunkSize)
+		:fp(fp), chunkSize(chunkSize), filter(serial_in_order)
+	{}
+	/*
+	MyInputPckFunc(const MyInputPckFunc& oth)
+		:fp(oth.fp), chunkSize(chunkSize), filter(serial_in_order)
+	{}
+	*/
+	 void* operator()(void *) override;
+private:
+	FILE *fp;
+	size_t chunkSize;
+};
+
+void* MyInputPckFunc::operator()(void *)
+{
+	char curline[MAX_PATH];
+	MultiAudioRec *ret = new MultiAudioRec;
+	int leftNum = this->chunkSize;
+	while (leftNum-- > 0)
+	{
+		if (fgets(curline, MAX_PATH, this->fp) == NULL){
+			break;
+		}
+
+		int lastIdx = strlen(curline) - 1;
+		while (lastIdx >= 0 && strchr(" \t\r\n", curline[lastIdx]) != NULL){
+			curline[lastIdx] = '\0';
+			lastIdx--;
+		}
+		if (lastIdx < 0){
+			continue;
+		}
+		OneAudioRec ele;
+		ele.audioFile.PathName;
+		wstring tmpWStr = UTF8sToWCs(curline);
+		wcsncpy(ele.audioFile.PathName, tmpWStr.c_str(), SR_MAX_PATHNAME_LEN);
+		ret->push_back(ele);
+	}
+	if (ret->size() == 0) return NULL;
+	return ret;
+}
+//////////////////////////////////////////////////////////////////////////
+static tbb::atomic<int> errAllocated;
+class MyRecogFunc : public tbb::filter
+{
+public:
+	MyRecogFunc()
+		:filter(parallel)
+	{}
+	void* operator()(void *);
+};
+
+void* MyRecogFunc::operator()(void* pPck)
+{
+	SR_HANDLE handle = SR_LID_Init({ L"D:\\shared_dir\\语种识别引擎和模型\\引擎\\LID_engine_windows\\LIDtest_offLine\\sysdir" });
+	if (handle == 0){
+		SR_ERROR Error;
+		SR_LID_GetLastError(handle, Error);
+		printf("InitError %d %s\n", Error.nError, WCsToGB2312s(Error.chError).c_str());
+		//TODO count error.
+		errAllocated.fetch_and_add(1);
+		return pPck;
+	}
+
+	MultiAudioRec& tasks = *static_cast<MultiAudioRec*>(pPck);
+	for(int idx=0; idx < tasks.size(); idx++){
 		SR_LIDRSTS rsts;
 		CFastList<SR_SEG, SR_SEG&> Segs;
 		SR_WAVBUF wavBuf;
-		string strFile = WCsToGB2312s(smpList.GetAt(i).PathName);
-		ASSERT_TRUE(SR_WF_ReadWavFile(smpList.GetAt(i), wavBuf))<< "无法读入待识别音频文件" << strFile;
+		string strFile = WCsToGB2312s(tasks[idx].audioFile.PathName);
+		if (!SR_WF_ReadWavFile(tasks[idx].audioFile, wavBuf)){
+			printf("无法读入待识别音频文件 at %s\n", strFile.c_str());
+			continue;
+		}
 		SR_SEG seg = { 0, 0, wavBuf.nWavBufLen, 0, 1 };
+		FreeSRWFWav(wavBuf);
 		Segs.AddTail(seg);
-		ASSERT_TRUE(SR_LID_File(lidHdl, smpList.GetAt(i), Segs, rsts))<< "lid识别失败 at " << strFile;
+		if (!SR_LID_File(handle, tasks[idx].audioFile, Segs, rsts)){
+			SR_ERROR Error;
+			SR_LID_GetLastError(handle, Error);
+			printf("%s at %s\n", WCsToMBs(Error.chError).c_str(), strFile.c_str());
+			continue;
+		}
+
+		tasks[idx].results.push_back(rsts);
 	}
-	SR_LID_Release(lidHdl);
+	SR_LID_Release(handle);
+	return pPck;
+}
+
+//////////////////////////////////////////////////////////////////////////
+class MyOutputResFunc: public tbb::filter{
+public:
+	MyOutputResFunc(FILE *fp)
+		:fp(fp), filter(serial_out_of_order)
+	{}
+	MyOutputResFunc(const MyOutputResFunc &oth)
+		:fp(oth.fp), filter(serial_out_of_order)
+	{}
+	void* operator()(void *);
+private:
+	FILE *fp;
+
+};
+
+void MyAssertReg(int exp, OneAudioRec& one){
+	ASSERT_EQ(exp, one.results.size())<< "audio file: "<< one.audioFile.PathName;
+	if (one.results[0].nRstNum > 0){
+		for (int i = 1; i < one.results.size(); i++){
+			ASSERT_EQ(one.results[i - 1].LIDRst[0].nLIDScore, one.results[i].LIDRst[0].nLIDScore) << "audio file: " << one.audioFile.PathName;
+			ASSERT_EQ(wstring(one.results[i - 1].LIDRst[0].chName), wstring(one.results[i - 1].LIDRst[0].chName));
+		}
+	}
+	else{
+		for (int i = 1; i < one.results.size(); i++){
+			ASSERT_EQ(0, one.results[i].nRstNum) << "audio file: " << one.audioFile.PathName;
+		}
+	}
+}
+void* MyOutputResFunc::operator()(void *pPck)
+{
+	MultiAudioRec& tasks = *static_cast<MultiAudioRec*> (pPck);
+	for (int i = 0; i < tasks.size(); i++){
+		SCOPED_TRACE(i);
+		MyAssertReg(2, tasks[i]);
+		if (tasks[i].results[0].nRstNum > 0){
+			fwprintf(fp, L"%ls    %ls    %d\n", tasks[i].audioFile.PathName, tasks[i].results[0].LIDRst[0].chName, tasks[i].results[0].LIDRst[0].nLIDScore);
+		}
+		else{
+			fwprintf(fp, L"%ls    %ls    %d\n", tasks[i].audioFile.PathName, L"无效", 0);
+		}
+	}
+	return NULL;
+}
+
+TEST(SR_LID, generalTestEx){
+	const char *listFile = "testdata\\lid.list";
+	const char *resFile = "testdata\\lidres.list";
+	FILE *outfp = fopen(resFile, "w");
+	ASSERT_NE((FILE*)NULL, outfp) << "无法创建结果文件" << resFile;
+	FILE * infp = fopen(listFile, "r");
+	ASSERT_NE((FILE*)NULL, infp) << "failed to open list file " << listFile;
+
+	tbb::pipeline pipeline;
+	MyInputPckFunc input(infp, 3);
+	MyRecogFunc recog;
+	MyRecogFunc recog2;
+	MyOutputResFunc output(outfp);
+	pipeline.add_filter(input);
+	pipeline.add_filter(recog);
+	pipeline.add_filter(recog2);
+	pipeline.add_filter(output);
+	pipeline.run(32);// according to maximum of sessions.
+
+	ASSERT_EQ(0, errAllocated)<< "failed to allocate some session.";
+	fclose(outfp);
+	fclose(infp);
 }
 
 int main(int argc, char **argv) {
@@ -263,6 +475,8 @@ int main(int argc, char **argv) {
 	//printf("%s\n", getenv("PATH"));
 	//system("pause");
 	setlocale(LC_ALL, "");
+	::testing::GTEST_FLAG(filter) = "SR_LID.*";
+	//::testing::GTEST_FLAG(repeat) = 3;
 	testing::InitGoogleTest(&argc, argv);
 	int ret = RUN_ALL_TESTS();
 	system("pause");

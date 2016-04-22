@@ -58,10 +58,12 @@ bool SR_FL_ReadListFile(const SR_FILE& File, CFastList<SR_FILE, SR_FILE&>& FileL
 	char tmpStr[SR_MAX_PATHNAME_LEN +1];
 	tmpStr[SR_MAX_PATHNAME_LEN] = '\0';
 	while (fgets(tmpStr, SR_MAX_PATHNAME_LEN, fd) != NULL){
-		char & ch = tmpStr[strlen(tmpStr) - 1];
-		if (ch == '\n'){
-			ch = '\0';
+		int lastIdx = strlen(tmpStr) - 1;
+		while (lastIdx >=0 && strchr(" \t\r\n", tmpStr[lastIdx]) != NULL){
+			tmpStr[lastIdx] = '\0';
+			lastIdx--;
 		}
+		if (lastIdx < 0) continue;
 		wstring tmpWStr = UTF8sToWCs(tmpStr);
 		wcsncpy(curFile.PathName, tmpWStr.c_str(), SR_MAX_PATHNAME_LEN);
 		FileList.AddTail(curFile);

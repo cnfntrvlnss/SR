@@ -15,7 +15,7 @@
 * @brief	16 比特量化的线性 PCM
 * @details	子类, 不可再次继承.
 **************************************************************************************************/
-class PCM final : public Wav
+class PCM : public Wav
 {
 public:
     virtual bool Load(const char *wavfile, unsigned int smprate, unsigned short numchls, unsigned short headcut = 0, unsigned short tailcut = 0, unsigned short minproc = 0, unsigned short maxproc = USHRT_MAX) override;

@@ -30,7 +30,12 @@ bool SR_WF_ReadWavFile(const SR_FILE& File, SR_WAVBUF& WavBuf)
 
 	return true;
 }
-
+SR_API void FreeSRWFWav(SR_WAVBUF &wavBuf)
+{
+	free(wavBuf.pWavBuf);
+	wavBuf.pWavBuf = NULL;
+	wavBuf.nWavBufLen = 0;
+}
 bool SR_WF_WriteWavFile(const SR_WAVBUF& WavBuf, const SR_FILE& File)
 {
 	string curFile = WCsToGB2312s(File.PathName);
